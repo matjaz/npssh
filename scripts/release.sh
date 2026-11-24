@@ -43,7 +43,6 @@ class Npssh < Formula
   desc "SSH agent with keys in NordPass and Touch ID for every signature"
   homepage "https://github.com/$repo"
   url "https://github.com/$repo/releases/download/v$version/$tarball"
-  version "$version"
   sha256 "$sha256"
 
   livecheck do
