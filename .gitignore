@@ -1,2 +1,3 @@
 /npssh
 *.test
+/dist/

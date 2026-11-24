@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 )
 
 const label = "dev.npssh.agent"
@@ -23,11 +24,10 @@ func cmdInstall(args []string) error {
 	ttl := fs.Duration("approve-ttl", 0, "reuse a Touch ID approval per key for this long (0 = ask every time)")
 	fs.Parse(args)
 
-	exe, err := os.Executable()
+	exe, err := stableExecutable()
 	if err != nil {
 		return err
 	}
-	exe, _ = filepath.EvalSymlinks(exe)
 	logf := home(".npssh", "agent.log")
 	os.MkdirAll(filepath.Dir(logf), 0o700)
 
@@ -74,6 +74,31 @@ Then:  npssh generate github   (or: npssh import github ~/.ssh/id_ed25519)
        npssh load
 `, label, logf, defaultSocket(), defaultSocket())
 	return nil
+}
+
+// stableExecutable returns a path to this binary that survives upgrades.
+// Homebrew's versioned Cellar path (deleted by `brew upgrade`) is swapped for
+// its opt/ symlink, which always points at the installed version.
+func stableExecutable() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return stablePath(exe), nil
+}
+
+func stablePath(exe string) string {
+	if r, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = r
+	}
+	// <prefix>/Cellar/npssh/<version>/bin/npssh → <prefix>/opt/npssh/bin/npssh
+	if i := strings.Index(exe, "/Cellar/npssh/"); i >= 0 {
+		opt := exe[:i] + "/opt/npssh/bin/npssh"
+		if r, err := filepath.EvalSymlinks(opt); err == nil && r == exe {
+			return opt
+		}
+	}
+	return exe
 }
 
 func cmdUninstall() error {

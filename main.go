@@ -25,6 +25,9 @@ import (
 	"golang.org/x/term"
 )
 
+// version is set at release time: -ldflags "-X main.version=1.2.3".
+var version = "dev"
+
 const usage = `npssh — SSH agent backed by NordPass, Touch ID per signature
 
   npssh serve    [--socket P] [--approve-ttl 0]   run the agent (foreground)
@@ -35,6 +38,7 @@ const usage = `npssh — SSH agent backed by NordPass, Touch ID per signature
   npssh load     [--ttl 8h] [--keep-unlocked]     NordPass → agent memory, then lock the np vault
   npssh list                                      keys currently in the agent
   npssh lock                                      wipe all keys from agent memory
+  npssh version
 
 Items are named "SSH <name>"; the list of items to load is ~/.config/npssh/keys.
 Point ssh at the socket:  export SSH_AUTH_SOCK=~/.npssh/agent.sock
@@ -79,6 +83,8 @@ func main() {
 		err = cmdList()
 	case "lock":
 		err = cmdLock()
+	case "version", "--version", "-v":
+		fmt.Println("npssh", version)
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:

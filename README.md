@@ -9,11 +9,19 @@ An SSH agent for macOS that keeps your keys in **NordPass** instead of `~/.ssh`.
 - Keys drop out of memory after `--ttl` (default 8h), or right away with `npssh lock`.
 - Works with plain `ssh`, `git`, `ssh-add -l/-L`, `ssh-keygen -Y sign` (commit signing), scp, rsync and so on.
 
-## Build (Xcode Command Line Tools + Go ≥ 1.24)
+## Install
 
 ```sh
-brew install go nordpass/tap/np      # np = official NordPass CLI
-cd npssh && go test ./... && go build -o ~/.local/bin/npssh .   # any stable dir on PATH
+brew tap nordpass/tap https://downloads.npass.app/cli/homebrew-tap.git   # np = official NordPass CLI
+brew install nordpass/tap/np matjaz/tap/npssh
+```
+
+After `brew upgrade npssh`, run `npssh install` again so the agent restarts on the new version.
+
+Or build from source (Xcode Command Line Tools + Go ≥ 1.24):
+
+```sh
+go test ./... && go build -o ~/.local/bin/npssh .   # any stable dir on PATH
 ```
 
 ## Setup
@@ -67,3 +75,11 @@ git config --global commit.gpgsign true
 - The agent accepts `ssh-add`, so you can still add file-based keys. They also get the Touch ID gate.
 - The `--format`, custom-field and stdin (`-`) behaviour of `np` was taken from NordPass's CLI docs. `import` reads the stored item back and fails loudly if anything doesn't round-trip.
 - Uninstall: `npssh uninstall`.
+
+## Releasing
+
+```sh
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The Release workflow tests, builds a universal macOS binary (`scripts/release.sh`), publishes the GitHub release and commits `Formula/npssh.rb` to [matjaz/homebrew-tap](https://github.com/matjaz/homebrew-tap). That last step needs the `HOMEBREW_TAP_TOKEN` secret (fine-grained token, Contents read/write on the tap); without it the formula is only attached to the release. Running the workflow by hand (Actions › Release › Run workflow) does a test build without publishing anything.
